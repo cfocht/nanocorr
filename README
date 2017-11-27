@@ -1,3 +1,10 @@
+This is a fork of jgurtowski's nanocorr. It makes some changes to the way that nanocorr is run to make it easier to use with Non-SGE clusters. Nanocorr can now simply be run with a simple bash loop. For example:
+```bash
+for file in *
+  do sbatch --wrap "nanocorr $file ../4349.fasta" -J nanocorr"$file" --mem 2
+done
+```
+
 Nanocorr
 
 Error correction for oxford nanopore reads
@@ -10,7 +17,7 @@ Requires:
 Installation:
         Clone the repository to a shared filesysem on a cluster
         
-        >git clone https://github.com/jgurtowski/nanocorr
+        >git clone https://github.com/cfocht/nanocorr
         >cd nanocorr        
         
         Create a virtual environment to install python dependencies
@@ -31,44 +38,5 @@ Installation:
         #Finally install the nanocorr package itself
         
         > python setup.py install
-
-Running:
-        Make sure you are in the virtualenv
-        >source nanocorr/nanocorr_ve/bin/activate
-
-        Partition your reads for distributed processing
-        >python partition.py 100 500 nanopore_reads.fa
-        
-        A series of directories will be created by the partitioning
-        [0001,0002,...]. In each directory run the nanocorr.py script
-        on SGE or similar system that sets SGE_TASK_ID environment
-        variable. Set the -t parameter to the number of files in the 
-        directory.
-        
-        >qsub -cwd -v PATH,LD_LIBRARY_PATH -t 1:500 -j y -o nanocorr_out /path/to/nanocorr.py query.fa reference.fa
-        
-        The query file will be "blasted" against each previously partitioned read.        
-        This query file can be anything useful for correction. 
-        Illumina data is what is used right now.
-        The corrected reads will be in the resulting "fa" files in the partition
-        directories.
-        If you supply a reference genome, the corrected reads will be blasted
-        against that and a ".refblast6.q" file will be created for each partition.
-        This will be the corrected reads aligned to the reference. Just make sure
-        the blast db has been created for the reference.
-
-        
-Non-SGE Environment:
-        If you don't have SGE installed you can use GNU parallel to run nanocorr on
-        a single machine. Although not the recommended method,
-        as alignment can be very compute intensive, for small genomes 
-        (bacteria), this method can be tractable.
-
-        For each of the directories created by the partition script (0001..000N),
-        cd into the directory and run:
-
-        $>for j in {1..500}; do 
-              echo "SGE_TASK_ID=$j TMPDIR=/tmp nanocorr.py query.fa reference.fa"; 
-          done  | parallel -j <# of compute cores>
 
         
